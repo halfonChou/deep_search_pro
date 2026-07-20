@@ -1,0 +1,60 @@
+# ================= deep_search_pro requirements（重构后）=================
+# 已删除 ragflow-sdk / mysql-connector-python / anthropic / google-genai / langchain-google-genai
+# 新增包未锁版本（环境较新），装完请执行：pip freeze > requirements.txt 回写锁定
+
+# ---- Web / 服务框架 ----
+fastapi==0.129.2
+uvicorn==0.41.0
+python-multipart==0.0.22
+websockets==15.0.1
+aiofiles==25.1.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
+python-dotenv==1.2.1
+
+# ---- Agent 编排 ----
+deepagents==0.4.3
+langgraph==1.0.9
+langgraph-checkpoint==4.0.0
+langgraph-checkpoint-sqlite     # 新增：AsyncSqliteSaver 状态持久化
+langchain==1.2.10
+langchain-core==1.2.14
+langchain-openai==1.1.10
+langchain-text-splitters==1.1.1
+tiktoken==0.12.0
+
+# ---- 数据库（异步）----
+asyncmy                         # 新增：异步 MySQL 驱动 + 连接池
+
+# ---- RAG / 向量 ----
+chromadb                        # 新增：本地持久化向量库
+
+# ---- 搜索 / LLM ----
+tavily-python==0.7.21
+openai==2.21.0
+
+# ---- 文档处理 ----
+python-docx==1.2.0
+pypdf==6.7.2
+openpyxl==3.1.5
+pandas==3.0.1
+numpy==2.4.2
+Markdown==3.10.2
+pymdown-extensions==10.21
+pywin32==311 ; sys_platform == "win32"   # Word COM，仅 Windows
+
+# ---- 通用 / 工具 ----
+tenacity==9.1.4
+PyYAML==6.0.3
+httpx==0.28.1
+requests==2.32.5
+
+# ---- 开发 / 测试（dev）----
+pytest                          # 新增
+pytest-asyncio                  # 新增
+ruff                            # 新增
+
+# ---- 可选 / 待核实（默认注释，确认引用后再启用）----
+# weasyprint==68.1              # Phase 2 Linux 跨平台 PDF 备选
+# langchain-community==0.4.1    # 仅当代码实际引用时启用
+# SQLAlchemy==2.0.46            # 仅当用到 ORM 时启用

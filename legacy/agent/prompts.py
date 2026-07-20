@@ -18,7 +18,7 @@ def load_yaml(file_path):
 # 项目的根地址
 # project_root_path  = Path(__file__).parent.parent
 project_root_path  = Path(__file__).parents[1] # prompts -> parents -> [agent , deep_search_pro]
-yaml_file_path = project_root_path / "prompt" / "prompts.yml"
+yaml_file_path = project_root_path / "prompts" / "prompts.yml"
 
 prompt_yaml_content = load_yaml(yaml_file_path)
 
