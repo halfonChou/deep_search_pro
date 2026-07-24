@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.infra.event_bus import EventBus
 
 
 @asynccontextmanager
@@ -11,7 +12,7 @@ async def lifespan(app: FastAPI):
     """应用启动时装配依赖，关闭时清理"""
     settings = get_settings()
     app.state.settings = settings
-
+    app.state.event_bus = EventBus(settings.event_queue_maxsize)
 
     yield
 
