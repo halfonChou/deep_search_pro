@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def resolve_in_session(name:str, session_path:Path):
     clean = Path(name.lstrip("/\\"))
 

@@ -1,6 +1,7 @@
 from app.agents.events import AgentEvent
 from app.infra.event_bus import EventBus
 
+
 async def test_subscribe_receives_buffered_events():
     bus = EventBus(maxsize=10)
     event = AgentEvent(type="tool_start", thread_id="tool_001", message="hello")

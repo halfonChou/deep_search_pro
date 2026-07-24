@@ -1,5 +1,8 @@
 import pytest
+from pydantic import ValidationError
+
 from app.config import Settings
+
 
 def test_settings_with_valid_env(monkeypatch):
     """给全必填项，Settings 应该正常创建。"""
@@ -23,5 +26,5 @@ def test_settings_missing_required_field(monkeypatch):
     monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.delenv("LLM_API_KEY", raising=False)
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         Settings(_env_file=None)
