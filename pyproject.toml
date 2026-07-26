@@ -19,6 +19,7 @@ select = [
 ]
 ignore = [
     "E501",  # 行过长（已有 line-length 兜底，docstring 等场景放宽）
+    "B008"
 ]
 
 [tool.setuptools.packages.find]
@@ -35,3 +36,4 @@ testpaths = ["tests"]
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+

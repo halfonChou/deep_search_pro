@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.deps import require_token
+from app.api.routes_files import router as files_router
 from app.config import get_settings
+from app.config import Settings
 from app.infra.event_bus import EventBus
 
 
@@ -17,9 +20,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
-def create_app()->FastAPI:
-    """应用工厂，创建并且配置fastapi实例"""
-    settings = get_settings()
+def create_app(settings: Settings | None = None) -> FastAPI:
+    if settings is None:
+        settings = get_settings()
     app = FastAPI(title="DeepSearch Pro", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
@@ -28,4 +31,5 @@ def create_app()->FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.include_router(files_router, dependencies=[Depends(require_token)])
     return app
