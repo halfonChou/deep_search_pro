@@ -5,19 +5,33 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.deps import require_token
 from app.api.routes_files import router as files_router
-from app.config import get_settings
-from app.config import Settings
+from app.config import Settings, get_settings
+from app.infra.db import Database
 from app.infra.event_bus import EventBus
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用启动时装配依赖，关闭时清理"""
+    """应用启动时装配依赖，关闭时清理。"""
     settings = get_settings()
     app.state.settings = settings
     app.state.event_bus = EventBus(settings.event_queue_maxsize)
 
+    # 惰性建数据库连接池：连不上不阻止启动，只记警告
+    db = Database(settings)
+    try:
+        await db.connect()
+    except Exception as e:
+        import logging
+        logging.warning("数据库连接池建立失败，数据库功能不可用: %s", e)
+        db = None
+    app.state.db = db
+
     yield
+
+    # 退出时关闭连接池
+    if app.state.db is not None:
+        await app.state.db.close()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:

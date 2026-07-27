@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.config import Settings
+from app.infra.db import Database
 from app.infra.emitter import EventEmitter
 
 
@@ -12,6 +13,9 @@ class AgentDeps:
     session_dir: Path
     thread_id:str = ""
     tools:list = field(default_factory=list)
+    db:Database | None = None
+    pdf_converter:object | None = None
+    retriever:object | None = None
 
 def build_main_agent(deps:AgentDeps):
     from app.infra.llm import build_chat_model
