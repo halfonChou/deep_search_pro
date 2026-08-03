@@ -1,0 +1,40 @@
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ============ 环境变量与密钥 ============
+.env
+.env.*
+!.env.example
+
+# ============ 运行期数据（会话产物 / 向量库 / checkpoint）============
+data/*
+!data/.gitkeep
+output/
+updated/
+
+# ============ SQLite / Chroma ============
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+chroma/
+
+# ============ IDE ============
+.idea/
+.vscode/
+
+# ============ 操作系统 ============
+.DS_Store
+Thumbs.db
+
+# ============ 测试 / 工具缓存 ============
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
