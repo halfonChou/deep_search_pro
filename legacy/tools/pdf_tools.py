@@ -1,15 +1,14 @@
 import logging
-import sys
 from pathlib import Path
 
 try:
     from typing import Annotated, Optional
 except ImportError:
-    from typing_extensions import Annotated, Optional
+    from typing import Annotated
 
-from langchain_core.tools import tool
-from api.monitor import monitor
 from api.context import get_session_context
+from api.monitor import monitor
+from langchain_core.tools import tool
 from utils.path_utils import resolve_path
 from utils.word_converter import convert_md_to_pdf_via_word
 
@@ -17,7 +16,7 @@ from utils.word_converter import convert_md_to_pdf_via_word
 @tool
 def convert_md_to_pdf(
         md_filename: Annotated[str, "要转换的Markdown文档路径（包含.md后缀）"],
-        pdf_filename: Annotated[Optional[str], "输出的PDF文件路径（可选，默认与源文件同名）"] = None
+        pdf_filename: Annotated[str | None, "输出的PDF文件路径（可选，默认与源文件同名）"] = None
 ) -> str:
     """
     将Markdown文档转换为PDF（基于Word引擎）

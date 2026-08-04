@@ -4,10 +4,9 @@ import inspect
 
 import deepagents
 import langchain
-import langgraph
-
-from deepagents import CompiledSubAgent, create_deep_agent
 import langchain.agents.middleware as mw
+import langgraph
+from deepagents import CompiledSubAgent, create_deep_agent
 
 print("deepagents", deepagents.__version__)
 print("langchain ", langchain.__version__)
@@ -32,6 +31,7 @@ for n in ["SummarizationMiddleware", "ToolRetryMiddleware", "ToolCallLimitMiddle
 
 # ★ Day 3 依赖：ToolCallRequest 到底有没有 runtime 属性
 from langchain.tools.tool_node import ToolCallRequest
+
 print("\nToolCallRequest 字段：",
       [a for a in dir(ToolCallRequest) if not a.startswith("_")])
 

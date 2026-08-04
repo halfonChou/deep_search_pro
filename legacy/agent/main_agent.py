@@ -1,27 +1,20 @@
-from agent.subagents.knowledge_base_agent import knowledge_base_agent
+import shutil
+from pathlib import Path
+
+from agent.llm import model
+from agent.prompts import main_agent_content
 from agent.subagents.database_query_agent import database_query_agent
+from agent.subagents.knowledge_base_agent import knowledge_base_agent
 from agent.subagents.network_search_agent import network_search_agent
+from api.context import reset_session_context, set_session_context, set_thread_context
+from api.monitor import monitor
+from deepagents import create_deep_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
 # main_agent tool导入
 from tools.markdown_tools import generate_markdown
 from tools.pdf_tools import convert_md_to_pdf
 from tools.upload_file_read_tool import read_file_content
-
-from deepagents import create_deep_agent
-
-from agent.llm import model
-from agent.prompts import main_agent_content
-
-from api.monitor import monitor
-import asyncio
-import uuid
-import shutil
-from pathlib import Path
-
-from api.context import set_session_context, reset_session_context, set_thread_context
-
-from langchain_core.messages import AIMessage
 
 main_agent = create_deep_agent(
    model = model,
@@ -88,7 +81,7 @@ async def run_deep_agent(task_query,session_id):
                 # 将原文件 -》 复制 -》 目标文件中  （copy2 保留原文件修改时间和权限等元数据）
                 shutil.copy2(updated_dir_path / filename, session_dir / filename)
             # 构建提示词！告诉大模型，有上传文件，你要读取上传文件！！
-            updated_info_prompt = (f"\n    [已上传文件] 已加载到工作目录:\n" +
+            updated_info_prompt = ("\n    [已上传文件] 已加载到工作目录:\n" +
                              "\n".join([f"    - {f}" for f in files]) +
                              "\n    请优先使用工具（read_file_content）读取并参考这些文件。")
 

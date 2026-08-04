@@ -1,8 +1,9 @@
 import os
-from dotenv import load_dotenv
+
 from api.monitor import monitor
-from mysql.connector import connect, Error
+from dotenv import load_dotenv
 from langchain_core.tools import tool
+from mysql.connector import Error, connect
 
 load_dotenv()
 

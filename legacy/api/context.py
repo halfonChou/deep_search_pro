@@ -1,5 +1,4 @@
 from contextvars import ContextVar
-from typing import Optional
 
 # =================================================================================================
 # 核心知识点: ContextVars (上下文变量)
@@ -48,7 +47,7 @@ def set_session_context(path: str):
     return _session_dir_ctx.set(path)
 
 
-def get_session_context() -> Optional[str]:
+def get_session_context() -> str | None:
     """
     获取当前请求链路的会话目录。
     可以在任何深层调用的工具函数中直接使用，无需层层传递参数。
@@ -63,7 +62,7 @@ def set_thread_context(thread_id: str):
     return _thread_id_ctx.set(thread_id)
 
 
-def get_thread_context() -> Optional[str]:
+def get_thread_context() -> str | None:
     """
     获取当前请求链路的 Thread ID。
     """

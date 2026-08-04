@@ -1,13 +1,12 @@
-import logging
 from pathlib import Path
 
 try:
     from typing import Annotated
 except ImportError:
-    from typing_extensions import Annotated
-from langchain_core.tools import tool
-from api.monitor import monitor
+    from typing import Annotated
 from api.context import get_session_context
+from api.monitor import monitor
+from langchain_core.tools import tool
 from utils.path_utils import resolve_path
 
 

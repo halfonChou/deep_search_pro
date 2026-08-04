@@ -3,15 +3,15 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.infra.checkpoint import build_checkpoint
+from app.agents.deps import AgentDeps
+from app.agents.main_agent import build_main_agent
 from app.api.deps import require_token
 from app.api.routes_files import router as files_router
 from app.config import Settings, get_settings
+from app.infra.checkpoint import build_checkpoint
 from app.infra.db import Database
 from app.infra.event_bus import EventBus
 
-from app.agents.main_agent import build_main_agent
-from app.agents.deps import AgentDeps
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,8 +30,8 @@ async def lifespan(app: FastAPI):
         db = None
     app.state.db = db
 
+    # ---- 临时注释：B5 攻防实验不需要 agent ----
     app.state.checkpointer = await build_checkpoint(settings)
-
     app.state.agent = build_main_agent(
         AgentDeps(settings=settings, bus=app.state.event_bus, db=db),
         checkpointer=app.state.checkpointer

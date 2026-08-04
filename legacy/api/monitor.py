@@ -1,8 +1,9 @@
-import datetime
 import asyncio
-from typing import Any, Dict, Optional
-from fastapi import WebSocket
+import datetime
+from typing import Any
+
 from api.context import get_thread_context
+from fastapi import WebSocket
 
 # 尝试导入全局运行时（用于脚本模式下的流式输出）
 try:
@@ -31,7 +32,7 @@ class ToolMonitor:
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(ToolMonitor, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance.websocket_manager = None  # 预留给 FastAPI WebSocketManager
         return cls._instance
 
@@ -39,7 +40,7 @@ class ToolMonitor:
         """设置 FastAPI 的 WebSocket 管理器"""
         self.websocket_manager = manager
 
-    def _emit(self, event_type: str, message: str, data: Optional[Dict[str, Any]] = None):
+    def _emit(self, event_type: str, message: str, data: dict[str, Any] | None = None):
         """内部发送方法"""
         payload = {
             "type": "monitor_event",
@@ -101,11 +102,11 @@ class ToolMonitor:
         # 加上特殊前缀，方便肉眼识别
         print(f"\n[Monitor:{event_type}] {message}")
 
-    def report_tool(self, tool_name: str, args: Dict[str, Any] = None):
+    def report_tool(self, tool_name: str, args: dict[str, Any] = None):
         """报告工具开始执行"""
         self._emit("tool_start", f"开始执行工具: {tool_name}", {"tool_name": tool_name, "args": args})
 
-    def report_assistant(self, assistant_name: str, args: Dict[str, Any] = None):
+    def report_assistant(self, assistant_name: str, args: dict[str, Any] = None):
         """报告正在调用的子智能体进度"""
         self._emit("assistant_call", f"正在调用助手: {assistant_name}",
                    {"assistant_name": assistant_name, "args": args})
@@ -125,7 +126,7 @@ monitor = ToolMonitor()
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: Dict[str, WebSocket] = {}
+        self.active_connections: dict[str, WebSocket] = {}
         # 延迟绑定 loop，防止初始化时 loop 不一致
         self.loop = None
 

@@ -7,7 +7,6 @@ import pytest
 
 from app.tools.sql_safety import assert_read_only, assert_table_allowed, enforce_limit
 
-
 # =========================================================================
 # assert_read_only — 合法语句
 # =========================================================================

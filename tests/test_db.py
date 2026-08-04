@@ -9,7 +9,6 @@ from app.config import Settings
 from app.infra.db import Database
 from app.tools.sql_safety import assert_read_only, assert_table_allowed, enforce_limit
 
-
 # =========================================================================
 # Database 类基本行为
 # =========================================================================
@@ -36,7 +35,7 @@ class TestDatabaseInit:
             tavily_api_key="test", embed_model="test",
         )
         db = Database(settings)
-        with pytest.raises(Exception):
+        with pytest.raises(OSError):
             await db.connect()
 
     @pytest.mark.asyncio
@@ -76,14 +75,14 @@ class TestSqlToolsIntegration:
     def test_build_sql_tools_returns_three(self) -> None:
         """build_sql_tools 应返回三个工具。"""
         from unittest.mock import MagicMock
+
         from app.tools.sql_tools import build_sql_tools
 
         mock_db = MagicMock()
-        mock_emitter = MagicMock()
         settings = Settings(
             llm_model="test", llm_base_url="http://localhost",
             llm_api_key="test", mysql_password="test",
             mysql_database="test", tavily_api_key="test", embed_model="test",
         )
-        tools = build_sql_tools(mock_db, mock_emitter, settings)
+        tools = build_sql_tools(mock_db, settings)
         assert len(tools) == 3

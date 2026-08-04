@@ -1,13 +1,13 @@
-import uuid
 import asyncio
-import uvicorn
-from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, Form
-from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
 import shutil
+import uuid
+from pathlib import Path
+
+import uvicorn
+from fastapi import FastAPI, File, Form, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 # 获取主项目的绝对路径
 current_dir = Path(__file__).resolve().parent
@@ -72,7 +72,7 @@ async def run_task(request: TaskRequest):
 
 
 @app.post("/api/upload")
-async def upload_files(files: List[UploadFile] = File(...), thread_id: str = Form(...)):
+async def upload_files(files: list[UploadFile] = File(...), thread_id: str = Form(...)):
     """
     文件上传接口 (File Upload)。
 

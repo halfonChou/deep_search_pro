@@ -3,12 +3,10 @@ from typing import Literal
 from langchain_core.tools import tool
 from tavily import TavilyClient
 
-from app.agents.events import AgentEvent
 from app.config import Settings
-from app.infra.emitter import EventEmitter
 
 
-def build_search_tools(emitter:EventEmitter,settings:Settings):
+def build_search_tools(settings:Settings):
     client = TavilyClient(api_key = settings.tavily_api_key)
     @tool
     async def internet_search(
@@ -20,14 +18,6 @@ def build_search_tools(emitter:EventEmitter,settings:Settings):
         """
             根据用户问题进行网络搜索。仅搜索公开网络信息。
         """
-        await emitter.emit(
-            AgentEvent(
-                type="tool_start",
-                thread_id="",
-                message="网络搜索工具",
-                data={"query":query, "topic":topic},
-            )
-        )
 
         return client.search(
             query=query,

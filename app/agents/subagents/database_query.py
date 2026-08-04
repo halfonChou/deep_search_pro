@@ -26,7 +26,6 @@ def build_database_agent(deps: AgentDeps):
     # 用 deps 里的 db、emitter、settings 构建 SQL 工具
     tools = build_sql_tools(
         db=deps.db,
-        emitter=deps.emitter,
         settings=deps.settings,
     )
 

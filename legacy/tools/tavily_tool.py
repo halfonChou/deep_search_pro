@@ -1,18 +1,19 @@
 # 定义一个网络搜索的工具！
 # ======================== 导入核心依赖 ========================
 # 类型注解：增强代码提示和静态检查能力
-from typing import  Literal
-# LangChain 工具装饰器：将普通函数转为 Agent 可调用的工具
-from langchain_core.tools import tool
-# Tavily 官方客户端：实现网络搜索核心功能
-from tavily import TavilyClient
-
 # 系统/第三方依赖
 import os  # 系统路径/环境变量处理
-from dotenv import load_dotenv  # 加载 .env 文件中的环境变量
+from typing import Literal
 
 # 自定义模块：工具调用埋点监控（需确保 api 模块可导入）
 from api.monitor import monitor
+from dotenv import load_dotenv  # 加载 .env 文件中的环境变量
+
+# LangChain 工具装饰器：将普通函数转为 Agent 可调用的工具
+from langchain_core.tools import tool
+
+# Tavily 官方客户端：实现网络搜索核心功能
+from tavily import TavilyClient
 
 # ======================== 初始化配置 ========================
 # 加载项目根目录的 .env 文件，读取环境变量（如 TAVILY_API_KEY）

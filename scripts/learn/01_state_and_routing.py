@@ -2,9 +2,8 @@
 import inspect
 from importlib import metadata
 
-import deepagents, langchain, langgraph
-from deepagents import create_deep_agent
 import langchain.agents.middleware as mw
+from deepagents import create_deep_agent
 
 
 def _version(pkg: str) -> str:
@@ -37,6 +36,7 @@ for n in ["SummarizationMiddleware","ToolRetryMiddleware","ToolCallLimitMiddlewa
 
 # ★ Day 3 依赖：ToolCallRequest 到底有没有 runtime 属性
 from langchain.tools.tool_node import ToolCallRequest
+
 print("\nToolCallRequest 字段：",
       [a for a in dir(ToolCallRequest) if not a.startswith("_")])
 
@@ -48,6 +48,7 @@ print("\nAgentMiddleware 的 hook 方法：",
 # CompiledSubAgent 在 deepagents 0.6+ 是一个 TypedDict（dict 子类），
 # inspect.signature 对它无效，改成打印字段结构。
 from deepagents import CompiledSubAgent
+
 print("\nCompiledSubAgent：TypedDict(dict) 配置结构")
 print("  annotations:", getattr(CompiledSubAgent, "__annotations__", None))
 print("  required   :", getattr(CompiledSubAgent, "__required_keys__", None))

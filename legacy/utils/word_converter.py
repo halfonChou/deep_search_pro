@@ -1,12 +1,10 @@
 import logging
-import os
 from pathlib import Path
-import time
 
 try:
     import markdown
-    import win32com.client
     import pythoncom
+    import win32com.client
 except ImportError:
     pass
 
@@ -21,7 +19,7 @@ def convert_md_to_pdf_via_word(md_abs_path: Path, pdf_abs_path: Path) -> str:
 
     try:
         # 1. MD 转 HTML
-        with open(md_abs_path, 'r', encoding='utf-8') as f:
+        with open(md_abs_path, encoding='utf-8') as f:
             md_content = f.read()
 
         html_body = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])

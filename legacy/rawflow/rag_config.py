@@ -1,8 +1,9 @@
 import os
-from dotenv import load_dotenv
-from typing import Tuple, Optional
 
-def _load_ragflow_env() -> Tuple[Optional[str], Optional[str]]:
+from dotenv import load_dotenv
+
+
+def _load_ragflow_env() -> tuple[str | None, str | None]:
     """
     加载 RAGFlow 环境变量（优先读取项目根目录 .env，兼容系统环境变量）
     返回值：(api_key, base_url) → 缺失则返回 None

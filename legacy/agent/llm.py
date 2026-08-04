@@ -1,5 +1,6 @@
-from dotenv import load_dotenv,find_dotenv
 import os
+
+from dotenv import find_dotenv, load_dotenv
 from langchain.chat_models import init_chat_model
 
 # 加载配置文件

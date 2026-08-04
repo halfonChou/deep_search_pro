@@ -58,6 +58,19 @@ async def list_files(
     ]
     return {"files": files}
 
+# @router.get("/list")
+# async def list_files(session_dir: Path = Query(...)):
+#     resolved = session_dir.resolve()
+#     if not resolved.is_dir():
+#         return {"files": []}
+#
+#     files = [
+#         {"name": file.name, "size": file.stat().st_size}
+#         for file in resolved.iterdir()
+#         if file.is_file()
+#     ]
+#     return {"files": files}
+
 
 @router.get("/download")
 async def download_file(
