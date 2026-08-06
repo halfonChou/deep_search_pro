@@ -2,6 +2,7 @@ from deepagents import create_deep_agent
 
 from app.agents.context import RunContext
 from app.agents.deps import AgentDeps
+from app.agents.subagents.database_query import build_database_subagent
 from app.agents.subagents.knowledge_base import build_knowledge_base_agent
 from app.agents.subagents.network_search import build_network_search_agent
 from app.infra.llm import build_chat_model
@@ -18,6 +19,7 @@ def build_main_agent(deps: AgentDeps, checkpointer=None):
     subagents = [
         build_network_search_agent(deps),
         build_knowledge_base_agent(deps),
+        build_database_subagent(deps),
     ]
     return create_deep_agent(
         model=build_chat_model(deps.settings),

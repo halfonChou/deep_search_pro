@@ -74,8 +74,8 @@ class TestSqlToolsIntegration:
         result = enforce_limit("SELECT * FROM users", 50)
         assert "LIMIT 50" in result
 
-    def test_build_sql_tools_returns_three(self) -> None:
-        """build_sql_tools 应返回三个工具。"""
+    def test_build_sql_tools_returns_four(self) -> None:
+        """build_sql_tools 应返回四个工具（Day 6 新增 describe_table）。"""
         from unittest.mock import MagicMock
 
         from app.tools.sql_tools import build_sql_tools
@@ -87,4 +87,4 @@ class TestSqlToolsIntegration:
             mysql_database="test", tavily_api_key="test", embed_model="test",
         )
         tools = build_sql_tools(mock_db, settings)
-        assert len(tools) == 3
+        assert len(tools) == 4
