@@ -3,6 +3,7 @@
 安全校验用例必过，真实数据库查询在无 DB 环境时 skip。
 """
 
+import asyncmy
 import pytest
 
 from app.config import Settings
@@ -35,7 +36,8 @@ class TestDatabaseInit:
             tavily_api_key="test", embed_model="test",
         )
         db = Database(settings)
-        with pytest.raises(OSError):
+        # 连接不存在的 MySQL → asyncmy 抛 OperationalError（PEP 249 标准异常）
+        with pytest.raises(asyncmy.errors.OperationalError):
             await db.connect()
 
     @pytest.mark.asyncio
