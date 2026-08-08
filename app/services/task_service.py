@@ -100,4 +100,40 @@ class TaskService:
 
     async def decide(self, thread_id, decisions: list[dict]):
         """human in the loop"""
-        raise NotImplementedError("day 7")
+        record = self._task.get(thread_id)
+        if record is None:
+            record = TaskRecord(thread_id=thread_id)
+            self._task[thread_id] = record
+
+        record.state = "running"
+        ctx = RunContext(thread_id=thread_id,
+                         session_dir=self._sessions.dir_for(thread_id=thread_id))
+        record.task = asyncio.create_task(
+            self._resume(thread_id, ctx,decisions))
+        record.task.add_done_callback(lambda t: self._on_done(thread_id,t))
+
+    async def _resume(self, thread_id: str, ctx: RunContext, decisions: list[dict]):
+        """恢复中断任务的执行体，复刻 _run 的状态推进 + 事件发布。"""
+        try:
+            await run_agent_stream(
+                self._agent, query="", ctx=ctx, bus=self._bus,
+                resume={"decisions": decisions},
+            )
+            record = self._task.get(thread_id)
+            if record:
+                record.state = "done"
+        except asyncio.CancelledError:
+            record = self._task.get(thread_id)
+            if record:
+                record.state = "cancelled"
+            raise
+        except Exception as e:
+            logger.exception("任务 %s 恢复失败", thread_id)
+            record = self._task.get(thread_id)
+            if record:
+                record.state = "error"
+            await self._bus.publish(
+                thread_id,
+                AgentEvent(type="error", thread_id=thread_id,
+                           message=f"任务恢复失败: {e}"),
+            )

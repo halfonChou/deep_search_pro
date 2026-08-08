@@ -12,3 +12,14 @@ def build_chat_model(settings: Settings):
         timeout=settings.llm_timeout,
         max_retries=settings.llm_max_retries,
     )
+
+def build_fallback_model(settings: Settings):
+    return [init_chat_model(
+        model_provider="openai",
+        model=name,
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key,
+        timeout=settings.llm_timeout,
+        max_retries=settings.llm_max_retries,)
+        for name in settings.fallback_models
+    ]

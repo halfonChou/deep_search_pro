@@ -1,6 +1,7 @@
 # scripts/probe_api.py —— Day 1 第一件事：探测真实 API 签名
 # 版本漂移是这类项目最大的坑，先探测再写代码，后续 10 天都对照这份输出
 import inspect
+from importlib.metadata import version
 
 import deepagents
 import langchain
@@ -10,7 +11,10 @@ from deepagents import CompiledSubAgent, create_deep_agent
 
 print("deepagents", deepagents.__version__)
 print("langchain ", langchain.__version__)
-print("langgraph ", langgraph.__version__)
+try:
+    print("langgraph ", version("langgraph"))
+except Exception:
+    print("langgraph  (无法读取版本号)")
 print("\ncreate_deep_agent 签名：")
 print(inspect.signature(create_deep_agent))
 
@@ -40,4 +44,8 @@ print("\nAgentMiddleware 的 hook 方法：",
       [a for a in dir(mw.AgentMiddleware) if a.endswith(("_model", "_tool_call", "_agent"))])
 
 # ★ Day 6 依赖
-print("\nCompiledSubAgent:", inspect.signature(CompiledSubAgent))
+try:
+    print("\nCompiledSubAgent:", inspect.signature(CompiledSubAgent))
+except (ValueError, TypeError) as e:
+    # CompiledSubAgent 在 deepagents 0.7.x 里是 TypedDict(dict 子类)，signature 拿不到
+    print("\nCompiledSubAgent: <dict 子类/TypedDict>，无 __init__ 签名，按关键字构造即可", e)

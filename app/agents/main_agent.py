@@ -29,4 +29,11 @@ def build_main_agent(deps: AgentDeps, checkpointer=None):
         middleware=build_middleware_stack(deps),
         context_schema=RunContext,
         checkpointer=checkpointer,
+        interrupt_on={
+            "execute_sql_query" :{"allowed_decisions":["approve", "edit", "reject"]},
+            "list_sql_table":False,
+            "get_table_data": False,
+            "describe_table":False,
+            "internet_search":False,
+        } if deps.settings.hitl_enabled else None,
     )
