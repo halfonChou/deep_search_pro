@@ -37,7 +37,7 @@ def make_db_agent_node(deps: AgentDeps, tools:list):
     """
     model = build_chat_model(deps.settings).bind_tools(tools)
 
-    base_prompt = sub_agent_prompts()["database_query"]["system_prompt"]
+    base_prompt = sub_agent_prompts()["database-query"]["system_prompt"]
 
     async def db_agent(state: DBQueryState):
         system = base_prompt
@@ -140,6 +140,6 @@ def build_database_subagent(deps: AgentDeps):
 
     return CompiledSubAgent(
         name="database-query",
-        description=sub_agent_prompts()["database_query"]["description"],
+        description=sub_agent_prompts()["database-query"]["description"],
         runnable=g.compile(),   # checkpointer 由父图提供，子图不单独编译
     )

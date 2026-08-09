@@ -3,6 +3,7 @@ from langchain.agents.middleware import (
     ContextEditingMiddleware,
     ModelCallLimitMiddleware,
     ModelFallbackMiddleware,
+    TodoListMiddleware,
     ModelRetryMiddleware,
     ToolCallLimitMiddleware,
     ToolRetryMiddleware,
@@ -37,6 +38,7 @@ def build_middleware_stack(deps: AgentDeps):
         ModelRetryMiddleware(max_retries=2),
         *([ModelFallbackMiddleware(*build_fallback_model(setting))]
             if setting.fallback_models else []),
+        TodoListMiddleware(),
         ContextEditingMiddleware(
             edits=[ClearToolUsesEdit(
                 trigger=setting.context_edit_trigger_tokens,

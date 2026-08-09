@@ -8,7 +8,7 @@ from app.agents.subagents.network_search import build_network_search_agent
 from app.infra.llm import build_chat_model
 from app.middleware.stack import build_middleware_stack
 from app.prompt import main_agent_prompt
-
+from app.tools.doc_tools import build_doc_tools
 
 def build_main_agent(deps: AgentDeps, checkpointer=None):
     """构建主 Agent，挂上子 Agent（任务规划与委托，Day 5）。
@@ -23,7 +23,7 @@ def build_main_agent(deps: AgentDeps, checkpointer=None):
     ]
     return create_deep_agent(
         model=build_chat_model(deps.settings),
-        tools=[],
+        tools=build_doc_tools(),
         system_prompt=main_agent_prompt(),
         subagents=subagents,
         middleware=build_middleware_stack(deps),
