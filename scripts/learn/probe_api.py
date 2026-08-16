@@ -6,7 +6,6 @@ from importlib.metadata import version
 import deepagents
 import langchain
 import langchain.agents.middleware as mw
-import langgraph
 from deepagents import CompiledSubAgent, create_deep_agent
 
 print("deepagents", deepagents.__version__)

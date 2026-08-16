@@ -126,3 +126,75 @@ def check_sql_call(name:str, args:dict, setting: Settings):
         logger.exception("SQL 校验器内部异常，已按拒绝处理： tool=%s",name)
         return f"校验器内部异常，已按拒绝处理：{type(e).__name__}"
     return None
+
+
+# ============================================================
+# 风险评估：决定一条 SQL 要不要人工审批
+#
+# ★★ 为什么不是「所有 SQL 都审批」：
+# execute_sql_query 已经过了三道闸——只读校验、LIMIT 兜底、表白名单。
+# 再让人逐条点确认，属于安全领域说的「审批疲劳」(approval fatigue)：
+# 请求太密且绝大多数无害时，人会条件反射一路点同意，
+# 等真正危险的那一条来了，照样闭眼放过。**审批太多，等于没有审批。**
+#
+# 所以这里只挑真正值得停下来问人的三类：
+#   1. 碰了敏感表          —— 明确划定的禁区
+#   2. SELECT *            —— 列范围失控，可能带出不该暴露的字段
+#   3. 既无 WHERE 又无 LIMIT —— 行范围失控，全表扫描
+# 其余带条件的普通 SELECT 直接放行。
+#
+# 下一步可以做的（本次没做）：跑一次 EXPLAIN 拿优化器的 rows 估算，
+# 超过阈值就要审批。成本是一次毫秒级查询，比静态规则准得多。
+# ============================================================
+
+_SELECT_STAR_RE = re.compile(r"SELECT\s+(?:DISTINCT\s+)?\*", re.IGNORECASE)
+_WHERE_RE = re.compile(r"\bWHERE\b", re.IGNORECASE)
+# FROM / JOIN 后面跟的表名（可选 schema 前缀、可选反引号）
+_TABLE_REF_RE = re.compile(
+    r"\b(?:FROM|JOIN)\s+`?(?:[a-zA-Z_][a-zA-Z0-9_]*`?\.`?)?([a-zA-Z_][a-zA-Z0-9_]*)`?",
+    re.IGNORECASE,
+)
+
+
+def referenced_tables(sql: str) -> set[str]:
+    """粗略抽出 SQL 里引用到的表名（小写）。
+
+    用于敏感表判定。正则做不到 100% 精确（子查询别名、CTE 会混进来），
+    但对「有没有碰到某张表」这个判断来说，**宁可多报不可漏报**——
+    多报的代价是多点一次确认，漏报的代价是敏感数据静悄悄流出去。
+    """
+    clean = _strip_strings(_strip_comments(sql))
+    return {m.group(1).lower() for m in _TABLE_REF_RE.finditer(clean)}
+
+
+def assess_sql_risk(name: str, args: dict, settings: Settings) -> str | None:
+    """判断这次工具调用要不要人工审批。
+
+    Returns
+    -------
+    str | None
+        需要审批时返回「原因」（会显示在审批卡片上，让人知道为什么被拦）；
+        低风险返回 None，直接放行。
+    """
+    if name != "execute_sql_query":
+        return None
+
+    sql = args.get("query")
+    if not isinstance(sql, str) or not sql.strip():
+        return None      # 参数都不合法，交给 assert_read_only 去拒绝，不走审批
+
+    clean = _strip_strings(_strip_comments(sql))
+
+    sensitive = {t.strip().lower() for t in (settings.sql_sensitive_tables or []) if t.strip()}
+    if sensitive:
+        hit = referenced_tables(sql) & sensitive
+        if hit:
+            return f"查询涉及敏感表：{'、'.join(sorted(hit))}"
+
+    if _SELECT_STAR_RE.search(clean):
+        return "使用了 SELECT *，会返回全部列，可能带出不该暴露的字段"
+
+    if not _WHERE_RE.search(clean) and not _LIMIT_RE.search(clean):
+        return "既没有 WHERE 条件也没有 LIMIT，属于全表扫描"
+
+    return None

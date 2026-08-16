@@ -28,7 +28,7 @@ class EventBus:
         # 删除并且获取队列
         self._push_history(thread_id,event)
         queue = self._queue(thread_id)
-        for q in queue:
+        for q in list(queue):
             if q.full():
                 q.get_nowait()
                 logger.info("Queue is full for thread %s, dropping oldest", thread_id)
@@ -61,6 +61,22 @@ class EventBus:
             if not queue:
                 self._subscribers.pop(thread_id, None)
 
+    def clear_history(self, thread_id: str):
+        """只清历史缓冲，**保留订阅者**。
+
+        ★ 任务结束时应该调这个，不是 drop()。
+        原因：一次任务结束就 drop 掉订阅者，前端那条 WebSocket 就变成了孤儿——
+        TCP 连着、generator 还阻塞在 q.get()，但它的队列已经从 _subscribers 里
+        被摘走了，后续任何 publish 都不会再投递给它。
+        表现就是：同一个会话跑第二个任务，前端一条事件都收不到。
+        """
+        self._history.pop(thread_id, None)
+
     def drop(self, thread_id: str):
+        """彻底清掉某会话：订阅者 + 历史。
+
+        ★ 只在确定整个会话不再需要时才调（例如显式销毁会话）。
+        单个任务结束请用 clear_history()。
+        """
         self._subscribers.pop(thread_id, None)
         self._history.pop(thread_id, None)

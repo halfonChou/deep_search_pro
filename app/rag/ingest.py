@@ -114,7 +114,7 @@ async def ingest_documents(
         batch_vectors = await embedder.embed(batch)
         all_embeddings.extend(batch_vectors)
         logger.info(
-            "嵌入进度: %d/%d", 
+            "嵌入进度: %d/%d",
             min(start + _EMBED_BATCH_SIZE, len(all_chunks)),
             len(all_chunks),
         )

@@ -1,7 +1,9 @@
+import asyncio
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
 import chromadb
+
 
 @dataclass
 class Hit:
@@ -44,11 +46,12 @@ class ChromaStore:
             embeddings: list[list[float]],
             metadatas: list[dict]):
 
-        self._collection.upsert(
+        await asyncio.to_thread(
+            self._collection.upsert,
             ids=ids,
             documents=texts,
             embeddings=embeddings,
-            metadatas=metadatas
+            metadatas=metadatas,
         )
 
     async def query(
@@ -56,10 +59,11 @@ class ChromaStore:
             embedding: list[float],
             top_k: int = 5,
     ):
-        result = self._collection.query(
+        result = await asyncio.to_thread(
+            self._collection.query,
             query_embeddings=[embedding],
             n_results=top_k,
-            include=["documents", "metadatas", "distances"]
+            include=["documents", "metadatas", "distances"],
         )
 
         hits: list[Hit] = []

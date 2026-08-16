@@ -1,15 +1,14 @@
 # tests/test_rag.py
 # ★★ 职责：验证 RAG 流水线的核心逻辑。不调真实 API，用 Fake 替身。
 
-import pytest
-
-from app.rag.embedder import Embedder
-from app.rag.store import ChromaStore, Hit, VectorStore
-from app.rag.ingest import ingest_documents, _load_file, _make_chunk_id
-from app.rag.retriever import Retriever
 from pathlib import Path
 from unittest.mock import AsyncMock
-from app.config import get_settings
+
+import pytest
+
+from app.rag.ingest import _load_file, _make_chunk_id
+from app.rag.retriever import Retriever
+from app.rag.store import Hit, VectorStore
 
 
 # ★★ FakeEmbedder：不调 API，直接返回固定长度的假向量。

@@ -11,8 +11,8 @@ import asyncio
 import logging
 import uuid
 
-from app.agents.deps import AgentDeps
 from app.agents.context import RunContext
+from app.agents.deps import AgentDeps
 from app.agents.main_agent import build_main_agent
 from app.config import get_settings
 from app.infra.checkpoint import build_checkpoint

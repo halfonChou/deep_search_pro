@@ -2,6 +2,7 @@ from typing import Protocol, runtime_checkable
 
 from openai import AsyncOpenAI
 
+
 @runtime_checkable
 class Embedder(Protocol):
     async def embed(self, text: list[str]):

@@ -6,7 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-    llm_model: str
+    llm_model: str = "qwen-max"  # T1
+    llm_model_fast: str = "qwen-plus"  # T2
+    llm_model_cheap: str = "qwen-turbo"  # T3
     llm_base_url: str
     llm_api_key: str
     llm_timeout: int = 60
@@ -41,6 +43,10 @@ class Settings(BaseSettings):
     api_token: str | None = None
     sql_table_allowlist: list[str] = []
     sql_row_limit: int = 100
+
+    # 敏感表：查这些表的 SQL 一律走人工审批（不管写得多规矩）。
+    # 空表示不启用。示例：SQL_SENSITIVE_TABLES=["patients","cost_price"]
+    sql_sensitive_tables: list[str] = []
 
     model_call_run_limit: int = 30  # 单次运行最多调模型 30 次
     model_call_thread_limit: int = 100  # 单个会话累计最多 100 次

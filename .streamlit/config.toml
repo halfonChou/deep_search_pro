@@ -1,0 +1,17 @@
+# Streamlit 主题固定成亮色。
+#
+# 为什么必须写死：Streamlit 默认跟随操作系统的深/浅色设置。系统开了深色模式时，
+# 它把正文字色改成白色，而 web/app.py 的自定义卡片背景是写死的白色 —— 白底白字。
+# 与其在 CSS 里跟它打补丁，不如在这里把主题钉死，颜色和 app.py 的 CSS 变量一致。
+[theme]
+base = "light"
+primaryColor = "#C96442"            # Claude 橙，对应 CSS 里的 --accent
+backgroundColor = "#FAF9F5"         # --bg
+secondaryBackgroundColor = "#FFFFFF" # --card
+textColor = "#1F1E1D"               # --ink
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

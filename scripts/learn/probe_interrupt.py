@@ -8,13 +8,12 @@
 """
 import asyncio
 
-from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
-from langchain_core.messages import AIMessage, ToolMessage
-from langchain_core.tools import tool
-from langgraph.checkpoint.memory import MemorySaver
-
 import deepagents
 from deepagents import create_deep_agent
+from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+from langchain_core.messages import AIMessage
+from langchain_core.tools import tool
+from langgraph.checkpoint.memory import MemorySaver
 
 
 # ---------- 1. 一个真正的 SQL 工具 ----------

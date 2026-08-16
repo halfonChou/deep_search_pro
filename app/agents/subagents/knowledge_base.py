@@ -2,6 +2,7 @@ from langchain.agents.middleware import ToolCallLimitMiddleware
 from langchain_core.tools import tool
 
 from app.agents.deps import AgentDeps
+from app.infra.llm import build_chat_model
 from app.prompt import sub_agent_prompts
 from app.tools.rag_tools import build_rag_tools
 
@@ -30,6 +31,11 @@ def build_knowledge_base_agent(deps: AgentDeps) -> dict:
 
     return {
         "name": "knowledge-base",
+        # ★ 必须传实例，不能传字符串。
+        # deepagents 的 resolve_model 对字符串会走 init_chat_model(model)，
+        # 既推断不出 DashScope 的 provider（报 Unable to infer model provider），
+        # 也没地方传 base_url / api_key。传实例它会原样放行。
+        "model": build_chat_model(deps.settings, deps.settings.llm_model_fast),
         "description": p["description"],           # 主 Agent 靠这段决定要不要派活
         "system_prompt": p["system_prompt"],
         "tools": tools,

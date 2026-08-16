@@ -7,6 +7,7 @@ from app.agents.subagents.database_query import (
     MAX_SQL_ATTEMPTS,
     _is_sql_tool,
     _precheck_ok,
+    build_database_subagent,
     make_router,
 )
 
@@ -88,3 +89,29 @@ def test_precheck_rejects_forbidden_sql():
     deps = _make_deps()
     assert not _precheck_ok({"name": "execute_sql_query", "args": {"query": "DROP TABLE x"}}, deps)  # ← 断言 False
     assert _precheck_ok({"name": "execute_sql_query", "args": {"query": "SELECT * FROM x"}}, deps)  # ← 断言 True
+
+    from langgraph.checkpoint.memory import MemorySaver
+    from langgraph.types import Command
+
+    async def test_sql_requires_approval(deps_with_fake_model):
+        """★ 防回归：execute_sql_query 必须停在审批点，不能直接执行。"""
+        sub = build_database_subagent(deps_with_fake_model)
+        graph = sub.runnable.copy(update={"checkpointer": MemorySaver()})
+        config = {"configurable": {"thread_id": "hitl-1"}}
+
+        result = await graph.ainvoke(
+            {"messages": [{"role": "user", "content": "查销售记录"}]}, config
+        )
+
+        # 1. 停在中断上了，没跑完
+        assert "__interrupt__" in result
+
+        # 2. 中断值的形状对，前端能渲染
+        value = result["__interrupt__"][0].value
+        assert value["action_requests"][0]["name"] == "execute_sql_query"
+
+        # 3. 批准后能继续执行
+        final = await graph.ainvoke(
+            Command(resume={"decisions": [{"type": "approve"}]}), config
+        )
+        assert final["messages"][-1].content

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.config import Settings
 
+_SUMMARY_MAX = 100
 
 class SessionService:
     def __init__(self, settings: Settings):
@@ -20,30 +21,47 @@ class SessionService:
         d.mkdir(exist_ok=True, parents=True)
         return d
 
-    async def record_report(self, thread_id: str, summary:str, topic:str, path:Path) -> dict:
-        if len(summary) > 100:
-            raise ValueError(f"summary 字数过长，超出100字，实际长度{len(summary)}字")
+    import asyncio
+
+
+    async def record_report(self, thread_id: str, topic: str, summary: str, path: Path) -> None:
+        #                                                              ↑ 返回类型改成 None（本来就不 return）
+
+        # ★ 原来超长直接 raise ValueError —— 这是错的。
+        #   模型多写 5 个字，工具就报错，而此时文件已经写到磁盘上了：
+        #   用户能拿到报告，模型却收到「失败」，它会困惑地重试一次，白烧一轮。
+        #   摘要长一点不是错误，截断就行。
+        summary = summary.strip()[:_SUMMARY_MAX]
+        topic = topic.strip()[:50]
+
         entry = {
             "thread_id": thread_id,
-            "summary": summary,
             "topic": topic,
+            "summary": summary,
             "path": str(path),
-            "ts":time.time(),
+            "ts": time.time(),
         }
-        index_file = self._settings.report_index_file
-        async with self._lock:
-            # 先给文件锁住
+
+        def _append() -> None:
+            index_file = self._settings.report_index_file
             index_file.parent.mkdir(exist_ok=True, parents=True)
             with index_file.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    async def list_reports(self, keyword:str|None = None, limit:int=20) -> list:
-        """查询历史报告"""
+        async with self._lock:
+            await asyncio.to_thread(_append)  # ★ 别在事件循环里做同步文件 IO
+
+    async def list_reports(self, keyword: str | None = None, limit: int | None = None) -> list[dict]:
+        limit = limit or self._settings.report_index_query_limit  # ★ 用上那个从没被读过的配置项
+
         index_file = self._settings.report_index_file
         if not index_file.exists():
             return []
-        result = []
-        async with self._lock:
+
+        kw = keyword.lower().strip() if keyword else None
+
+        def _read() -> list[dict]:
+            result = []
             with index_file.open(encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
@@ -53,10 +71,18 @@ class SessionService:
                         entry = json.loads(line)
                     except json.JSONDecodeError:
                         continue
-                    if keyword and keyword.lower() not in entry.get("summary", "").lower() and keyword.lower() not in entry.get("topic", ""):
-                        continue
+                    if kw:
+                        # ★ 原来 topic 那边忘了 .lower()，大小写不一致时匹配不到
+                        haystack = f"{entry.get('topic', '')} {entry.get('summary', '')}".lower()
+                        if kw not in haystack:
+                            continue
                     result.append(entry)
-        result.sort(key=lambda x: x['ts', 0], reverse=True)
+            return result
+
+        async with self._lock:
+            result = await asyncio.to_thread(_read)
+
+        result.sort(key=lambda x: x.get("ts", 0), reverse=True)
         return result[:limit]
 
     async def cleanup_expired(self, ttl_hours:int):

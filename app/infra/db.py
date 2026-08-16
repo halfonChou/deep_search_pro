@@ -60,10 +60,12 @@ class Database:
         try:
             async with self._pool.acquire() as conn:
                 async with conn.cursor() as cur:
-                    await asyncio.wait_for(
-                        cur.execute(sql, params),
-                        timeout=timeout,
-                    )
+                    # ★ params 为空时必须只传 sql。
+                    # 驱动的逻辑是 `if args is not None: query = query % escaped_args`，
+                    # 空元组 () 也不是 None，于是 LIKE '%布洛芬%' 里的 % 会被当成
+                    # 格式化占位符，报 "not enough arguments for format string"。
+                    coro = cur.execute(sql, params) if params else cur.execute(sql)
+                    await asyncio.wait_for(coro, timeout=timeout)
                     if cur.description is None:
                         return [],[]
                     columns = [c[0] for c in cur.description ]

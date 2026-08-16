@@ -23,6 +23,10 @@ async def ws_endpoint(websocket: WebSocket, thread_id: str):
     except WebSocketDisconnect:
         pass     # 客户端断开：正常，不报错
     finally:
-        # 断开后清理该会话的所有订阅者队列 + 历史缓冲
-        # ★ 注意：这会清掉整个会话的缓冲，若还有别的客户端连着会有影响
-        bus.drop(thread_id)
+        # ★ 这里什么都不用做。
+        # EventBus.subscribe() 是个 async generator，它自己的 finally 里已经
+        # _unsubscribe 掉了本连接的队列 —— 精确、只影响自己。
+        # 原来这里调 bus.drop(thread_id)，会把**整个会话**的订阅者和历史一起清掉：
+        #   - 同一会话开了两个页面时，关掉一个，另一个也瞎了
+        #   - 历史被清掉，后来的连接看不到回放
+        pass
