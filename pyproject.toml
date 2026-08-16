@@ -2,6 +2,47 @@
 name = "deep-search-pro"
 version = "0.1.0"
 requires-python = ">=3.11"
+dependencies = [
+    # ---- Web / 服务框架 ----
+    "fastapi==0.129.2",
+    "uvicorn==0.41.0",
+    "python-multipart==0.0.22",
+    "websockets==15.0.1",
+    "aiofiles==25.1.0",
+    "pydantic==2.12.5",
+    "pydantic-settings==2.13.1",
+    "python-dotenv==1.2.1",
+    # ---- Agent 编排：deepagents 0.7.x 要求 langchain>=1.3.14,<2 / langgraph>=1.2.5,<1.3 ----
+    "deepagents>=0.7.1,<1.0.0",
+    "langgraph>=1.2.5,<1.3.0",
+    "langgraph-checkpoint>=4.1.0,<5.0.0",
+    "langgraph-checkpoint-sqlite>=3.1.1",
+    "langchain>=1.3.14,<2.0.0",
+    "langchain-core>=1.5.1,<2.0.0",
+    "langchain-openai>=1.4.1,<2.0.0",
+    "langchain-text-splitters>=1.1.1,<2.0.0",
+    "tiktoken>=0.7.0,<1.0.0",
+    # ---- 数据库 / RAG ----
+    "asyncmy",
+    "chromadb",
+    # ---- 搜索 / LLM ----
+    "tavily-python>=0.7.23",
+    "openai>=2.45.0,<3.0.0",
+    # ---- 文档处理 ----
+    "python-docx==1.2.0",
+    "pypdf==6.7.2",
+    "openpyxl==3.1.5",
+    "pandas==3.0.1",
+    "numpy==2.4.2",
+    "Markdown==3.10.2",
+    "pymdown-extensions==10.21",
+    "pywin32==311 ; sys_platform == 'win32'",
+    # ---- 通用 / 工具 ----
+    "tenacity==9.1.4",
+    "PyYAML==6.0.3",
+    "httpx==0.28.1",
+    "requests==2.32.5",
+]
 
 # ---- ruff 配置 ----
 [tool.ruff]
@@ -9,24 +50,17 @@ line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
-select = [
-    "E",   # pycodestyle 错误
-    "W",   # pycodestyle 警告
-    "F",   # pyflakes（未使用变量/导入等）
-    "I",   # isort（import 排序）
-    "UP",  # pyupgrade（旧语法升级提示）
-    "B",   # flake8-bugbear（常见 bug 模式）
-]
-ignore = [
-    "E501",  # 行过长（已有 line-length 兜底，docstring 等场景放宽）
-    "B008"
-]
+select = ["E", "W", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
 
-[tool.ruff.lint.isort]
-known-first-party = ["app"]
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff"]
 
 # ---- pytest 配置 ----
 [tool.pytest.ini_options]
@@ -37,4 +71,3 @@ pythonpath = ["."]
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
-
