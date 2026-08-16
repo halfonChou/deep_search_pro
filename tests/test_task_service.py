@@ -110,13 +110,21 @@ async def test_concurrency_limit_queues(task_service):
     assert "t2" in task_service._task
     assert "t3" in task_service._task
 
-    # 等所有任务跑完
+    # 等所有任务跑完。
+    # ★ 等的是 finished_at 而不是 state=="done"：state 由 _run() 在协程体里设，
+    #   finished_at 由 _on_done 回调设，而 done_callback 要等下一轮事件循环才触发。
+    #   盯 state 会在回调跑完之前就跳出循环 —— 那是个竞态。
     for _ in range(50):
-        if not task_service._task:
+        if all(rec.finished_at is not None for rec in task_service._task.values()):
             break
         await asyncio.sleep(0.05)
-    # 任务结束后 _on_done 会清理登记表
-    assert task_service._task == {}
+
+    # ★ 修复 _evict() 反向条件后的正确行为（原断言 `_task == {}` 编码的是 bug 行为）：
+    #   任务结束只写 finished_at，记录要留到超过 _RECORD_TTL(15min) 才清理。
+    #   记录立刻消失恰恰是 bug —— 那会让 status()/cancel()/幂等提交全部失效。
+    assert set(task_service._task) == {"t1", "t2", "t3"}
+    assert all(rec.state == "done" for rec in task_service._task.values())
+    assert all(rec.finished_at is not None for rec in task_service._task.values())
 
 
 async def test_late_subscriber_receives_events(task_service):

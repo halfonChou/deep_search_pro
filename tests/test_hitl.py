@@ -42,15 +42,23 @@ def test_serialize_interrupt_main_tuple():
 
 
 def test_serialize_interrupt_fallback_list():
-    """兜底：老版本可能是 list，原样包一层 action_requests，不崩。"""
+    """兜底：裸 dict 列表（不是 Interrupt 对象）时，原样收进 interrupts，不崩。
+
+    ★ 结构变更：_serialize_interrupt 现在支持**多中断**，返回 {"interrupts": [...]}，
+      每条带自己的 id（多个子 Agent 同时挂起时，恢复必须按 id 逐个对应）。
+      list 不再被整体包成 action_requests，而是被当成"多个中断项"逐条解析。
+    """
     result = _serialize_interrupt([{"name": "x", "args": {}}])
-    assert result["action_requests"][0]["name"] == "x"
+    assert result["interrupts"][0]["name"] == "x"
+    assert result["interrupts"][0]["id"] is None      # 裸 dict 没有 id
+    assert result["action_requests"] == []            # 这条里没有 action_requests 字段
 
 
 def test_serialize_interrupt_fallback_raw():
-    """兜底：未知结构，包一层 raw，绝不抛异常。"""
+    """兜底：未知结构原样保留在 interrupts 里，绝不抛异常。"""
     result = _serialize_interrupt({"weird": "shape"})
-    assert result["raw"] == {"weird": "shape"}
+    assert result["interrupts"][0]["weird"] == "shape"
+    assert result["action_requests"] == []
 
 
 # ===== 2. run_agent_stream 的 resume 分支 =====

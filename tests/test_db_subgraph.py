@@ -67,13 +67,31 @@ def test_route_rewrites_bad_sql():
     assert router(state) == "rewrite_sql"  # ← 你应该断言这个值
 
 
-# ===== 分支 4：正常 → db_tools =====
-def test_route_runs_tools_for_good_sql():
+# ===== 分支 4：低风险 SQL → db_tools（不经审批直接执行）=====
+def test_route_runs_tools_for_low_risk_sql():
+    """列名明确 + 带 WHERE 的查询是低风险，assess_sql_risk 返回 None，直接放行。
+
+    ★ 原用例用的是 `SELECT * FROM drugs`，现在会被 assess_sql_risk 判为高风险
+      （"使用了 SELECT *，会返回全部列"）而路由到 approve_sql —— 那是**正确行为**，
+      不是 bug。所以这里换成一条真正低风险的 SQL 来测 db_tools 这条分支。
+    """
+    router = make_router(_make_deps())
+    state = _make_state([
+        FakeAIMessage(tool_calls=[
+            {"name": "execute_sql_query", "args": {"query": "SELECT name FROM drugs WHERE id = 1"}},
+        ]),
+    ])
+    assert router(state) == "db_tools"
+
+
+# ===== 分支 5：高风险 SQL → approve_sql（人工审批）=====
+def test_route_requires_approval_for_select_star():
+    """SELECT * 属于高风险，必须停在审批点，不能直接执行。"""
     router = make_router(_make_deps())
     state = _make_state([
         FakeAIMessage(tool_calls=[{"name": "execute_sql_query", "args": {"query": "SELECT * FROM drugs"}}]),
     ])
-    assert router(state) == "db_tools"  # ← 你应该断言这个值
+    assert router(state) == "approve_sql"
 
 
 # ===== 辅助函数：_is_sql_tool =====

@@ -133,9 +133,11 @@ async def test_task_submit_and_complete():
     assert tid == "thread-001"
     # 等待任务完成
     await asyncio.sleep(0.3)
-    # _on_done 会 pop 掉记录，所以状态是 not_found（已完成并清理）
+    # ★ 修复 _evict() 反向条件后：任务结束写 finished_at，记录保留到 TTL 过期，
+    #   所以这里查到的是 done。原断言 not_found 编码的是"任务一结束记录就被误删"的 bug 行为。
     status = svc.status("thread-001")
-    assert status["state"] == "not_found"
+    assert status["state"] == "done"
+    assert status["running"] is False
 
 
 @pytest.mark.asyncio

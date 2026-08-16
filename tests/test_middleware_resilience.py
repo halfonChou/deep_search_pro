@@ -24,7 +24,11 @@ from app.agents.deps import AgentDeps
 from app.config import Settings
 from app.infra.event_bus import EventBus
 from app.middleware.budget import BudgetMiddleware
-from app.middleware.observability import EventEmitMiddleware
+from app.middleware.observability import (
+    CacheStatsMiddleware,
+    EventEmitMiddleware,
+    ToolRetryNotifyMiddleware,
+)
 from app.middleware.sql_guard import SqlGuardMiddleware
 from app.middleware.stack import build_middleware_stack
 
@@ -230,19 +234,31 @@ def _build_deps(**settings_overrides):
 
 
 def test_stack_order_matches_design():
-    """9(或10)层顺序必须和 §1.3 一致，改错顺序这个测试第一个报警。"""
+    """栈顺序必须和 stack.py 的设计依据一致，改错顺序这个测试第一个报警。
+
+    ★ 索引已随 stack.py 更新：CacheStatsMiddleware（诊断 prompt 缓存命中率）
+      后来插在了 EventEmit 之后、Budget 之前，原来那份索引整体错位一位。
+      顺序的三条硬约束没变，下面按"相对位置"再断言一遍，比裸索引更抗改动。
+    """
     stack = build_middleware_stack(_build_deps())
     types = [type(m) for m in stack]
 
-    assert types[0] is EventEmitMiddleware                 # ①最外层
-    assert types[1] is BudgetMiddleware                    # ②预算在所有限流/重试之前
-    assert types[2] is ModelCallLimitMiddleware             # ③
-    assert types[3] is ToolCallLimitMiddleware              # ④全局工具闸
-    assert types[4] is ToolCallLimitMiddleware              # ⑤单独卡搜索
-    assert types[5] is SqlGuardMiddleware                   # ⑥必须在 ToolRetry 之前
-    assert types[6] is ToolRetryMiddleware                  # ⑦
-    assert types[7] is ModelRetryMiddleware                 # ⑧
+    assert types[0] is EventEmitMiddleware                  # ①最外层，量到含重试的真实耗时
+    assert types[1] is CacheStatsMiddleware                 # ②缓存命中率诊断
+    assert types[2] is BudgetMiddleware                     # ③预算在所有限流/重试之前
+    assert types[3] is ModelCallLimitMiddleware             # ④
+    assert types[4] is ToolCallLimitMiddleware              # ⑤全局工具闸
+    assert types[5] is ToolCallLimitMiddleware              # ⑥单独卡搜索
+    assert types[6] is SqlGuardMiddleware                   # ⑦必须在 ToolRetry 之前
+    assert types[7] is ToolRetryMiddleware                  # ⑧
+    assert types[8] is ModelRetryMiddleware                 # ⑨
+    assert types[9] is ToolRetryNotifyMiddleware            # ⑩装在重试内层才看得见重试次数
     assert types[-1] is ContextEditingMiddleware            # 最内层，紧贴模型
+
+    # 三条设计依据，用相对顺序表达（新增中间件不会误伤这几条）
+    assert types.index(EventEmitMiddleware) == 0
+    assert types.index(BudgetMiddleware) < types.index(ToolRetryMiddleware)
+    assert types.index(SqlGuardMiddleware) < types.index(ToolRetryMiddleware)
 
 
 def test_stack_skips_fallback_when_not_configured():
@@ -252,14 +268,20 @@ def test_stack_skips_fallback_when_not_configured():
 
 
 def test_stack_includes_fallback_when_configured():
-    """配了 fallback_models → 栈里恰好出现 1 个 ModelFallbackMiddleware，夹在 ModelRetry 和 ContextEditing 之间。"""
+    """配了 fallback_models → 栈里恰好出现 1 个 ModelFallbackMiddleware。
+
+    ★ 位置已变：ToolRetryNotifyMiddleware 后来插在了 ModelRetry 和 Fallback 之间，
+      Fallback 后面跟的是 TodoListMiddleware 而不是 ContextEditing。
+      这里改成断言"在重试之后、在最内层裁剪之前"这个真正要守的性质。
+    """
     stack = build_middleware_stack(_build_deps(fallback_models=["test-fallback-model"]))
+    types = [type(m) for m in stack]
     fallback_indices = [i for i, m in enumerate(stack) if isinstance(m, ModelFallbackMiddleware)]
 
     assert len(fallback_indices) == 1
     idx = fallback_indices[0]
-    assert isinstance(stack[idx - 1], ModelRetryMiddleware)
-    assert isinstance(stack[idx + 1], ContextEditingMiddleware)
+    assert idx > types.index(ModelRetryMiddleware)          # 重试都失败了才降级
+    assert idx < types.index(ContextEditingMiddleware)      # 仍在最内层裁剪之外
 
 
 # ===== 6.（需要你本地先探测确认字段名）search_tool_run_limit 熔断后继续 =====
